@@ -110,7 +110,9 @@ if __name__ == '__main__':
     plt.ylim(0, 1)
     graph_animator = GraphAnimator(bgraph, graph)
     ani = animation.FuncAnimation(
-        fig, graph_animator.animate, blit=True, interval=1000, repeat=False,
+        fig, graph_animator.animate, blit=True, interval=3000, repeat=False,
         frames=len(graph)
     )
+
+    ani.save('markov.gif', writer='imagemagick', fps=1, dpi=100)
     plt.show()

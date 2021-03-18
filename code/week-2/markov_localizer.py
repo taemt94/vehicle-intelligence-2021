@@ -27,6 +27,8 @@ def initialize_priors(map_size, landmarks, stdev):
 
 # Estimate pseudo range determined according to the
 # given pseudo position.
+# pseudo_range는 pseudo_position에서 각각의 랜드마크가 
+# 보이는 위치이면 그 거리 나타냄.
 def estimate_pseudo_range(landmarks, p):
     pseudo_ranges = []
     # Loop over each landmark and estimate pseudo ranges
@@ -47,13 +49,18 @@ def motion_model(position, mov, priors, map_size, stdev):
     # moving to the current position from that prior.
     # Multiply this probability to the prior probability of
     # the vehicle "was" at that prior position.
+
+    for prev_position in range(map_size):
+        dist = position - prev_position
+        prob = norm_pdf(dist, mov, stdev) * priors[prev_position]
+        position_prob += prob
     return position_prob
 
 # Observation model (assuming independent Gaussian)
 def observation_model(landmarks, observations, pseudo_ranges, stdev):
     # Initialize the measurement's probability to one.
     distance_prob = 1.0
-
+    
     # TODO: Calculate the observation model probability as follows:
     # (1) If we have no observations, we do not have any probability.
     # (2) Having more observations than the pseudo range indicates that
@@ -64,6 +71,12 @@ def observation_model(landmarks, observations, pseudo_ranges, stdev):
     #     d: observation distance
     #     mu: expected mean distance, given by pseudo_ranges
     #     sig: squared standard deviation of measurement
+
+    if (len(observations) <= len(pseudo_ranges)):
+        for i in range(len(observations)):
+            distance_prob *= norm_pdf(observations[i], pseudo_ranges[i], stdev ** 2)    
+    else:
+        distance_prob = 0.0
     return distance_prob
 
 # Normalize a probability distribution so that the sum equals 1.0.
@@ -74,3 +87,4 @@ def normalize_distribution(prob_dist):
         if (total != 0.0):
             normalized[i] = prob_dist[i] / total
     return normalized
+
