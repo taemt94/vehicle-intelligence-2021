@@ -52,8 +52,8 @@ def motion_model(position, mov, priors, map_size, stdev):
 
     for prev_position in range(map_size):
         dist = position - prev_position
-        prob = norm_pdf(dist, mov, stdev) * priors[prev_position]
-        position_prob += prob
+        position_prob += norm_pdf(dist, mov, stdev) * priors[prev_position]
+        
     return position_prob
 
 # Observation model (assuming independent Gaussian)
