@@ -27,8 +27,6 @@ def initialize_priors(map_size, landmarks, stdev):
 
 # Estimate pseudo range determined according to the
 # given pseudo position.
-# pseudo_range는 pseudo_position에서 각각의 랜드마크가 
-# 보이는 위치이면 그 거리 나타냄.
 def estimate_pseudo_range(landmarks, p):
     pseudo_ranges = []
     # Loop over each landmark and estimate pseudo ranges
