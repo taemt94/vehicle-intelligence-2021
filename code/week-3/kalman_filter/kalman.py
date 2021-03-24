@@ -1,6 +1,22 @@
 import numpy as np
 
 class KalmanFilter:
+    ''' testKalman.py에서 입력함. 초기값으로
+    A = np.array([
+        [1, dt],
+        [0, 1]
+    ])
+    C = np.array([
+        [1, 0]
+    ])
+    R = np.array([
+        [1, 0],
+        [0, 3]
+    ])
+    Q = np.array([
+        10
+    ])
+    '''
     def __init__(self, A, C, R, Q):
         # Initialize system model matrices
         self.A = A
