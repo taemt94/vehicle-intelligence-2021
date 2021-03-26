@@ -39,8 +39,8 @@ class KalmanFilter:
         px, py, vx, vy = self.x
         rho_est = sqrt(px ** 2 + py ** 2)
         phi_est = atan2(py, px)
-        rho_dot_est = (px * vx + py * vy) / sqrt(px ** 2 + py ** 2)]
-        y = z - np.array([rho_est, phi_est, rho_dot_est, dtype=np.float32)
+        rho_dot_est = (px * vx + py * vy) / sqrt(px ** 2 + py ** 2)
+        y = z - np.array([rho_est, phi_est, rho_dot_est], dtype=np.float32)
 
         # 5. Normalize phi so that it is between -PI and +PI
         phi = y[1]
