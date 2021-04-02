@@ -70,6 +70,7 @@ if __name__ == '__main__':
         # Feed the particle with observations to update weights.
         observations = [{'x': x, 'y': y} for (x, y) in \
                         zip (m['measurement_x'], m['measurement_y'])]
+        
         pf.update_weights(sensor_range, *landmark_std, observations, Map)
         # Resample particles to capture posterior belief distribution.
         pf.resample()
@@ -77,7 +78,7 @@ if __name__ == '__main__':
         #   we will assume that this represents the vehicle's position.
         particle = pf.get_best_particle()
         # Print for debugging purposes.
-        print("[%d] %f, %f" % (count, particle['x'], particle['y']))
+        # print("[%d] %f, %f" % (count, particle['x'], particle['y']))
         # Collect data for post-mortem plotting.
         graph.append({
             'position': (particle['x'], particle['y']),
