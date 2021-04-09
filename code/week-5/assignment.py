@@ -71,14 +71,47 @@ def optimum_policy_2D(grid, init, goal, cost):
             # use in generating the final path policy.
             if (y, x) == goal and value[(t, y, x)] > 0:
                 # TODO: implement code.
-                pass
+                value[(t, y, x)] = 0
+                policy[(t, y, x)] = 3
+                change = True
+
             # Try to use simple arithmetic to capture state transitions.
             elif grid[(y, x)] == 0:
                 # TODO: implement code.
-                pass
+                for act, act_name in zip(action, action_name):
+                    t2 = (t + act) % len(forward)
+                    y2, x2 = y + forward[t2][0], x + forward[t2][1]
+                    # act_cost = cost[act + 1]
+                    if act_name == 'R':
+                        act_cost = cost[0]
+                    elif act_name == '#':
+                        act_cost = cost[1]
+                    else:
+                        act_cost = cost[2]
+                    if 0 <= y2 < grid.shape[0] and 0 <= x2 < grid.shape[1] and grid[(y2, x2)] == 0:
+                        v2 = value[(t2, y2, x2)] + act_cost
+                        if v2 < value[(t, y, x)]:
+                            value[(t, y, x)] = v2
+                            policy[(t, y, x)] = act
+                            change = True
+
     # Now navigate through the policy table to generate a
     # sequence of actions to take to follow the optimal path.
     # TODO: implement code.
+    y, x, o = init
+    min_value = 999
+    while (y, x) != goal:
+        for t in range(len(forward)):
+            if value[(t, y, x)] < min_value:
+                min_value = value[(t, y, x)]
+                policy2D[(y, x)] = action_name[policy[(o, y, x)] + 1]
+        min_value = 999
+
+        next_o = (o + policy[o, y, x]) % len(forward)
+        next_y, next_x = y + forward[next_o][0], x + forward[next_o][1]
+        y, x, o = next_y, next_x, next_o
+        if (y, x) == goal:
+            policy2D[(y, x)] = '*'
 
     # Return the optimum policy generated above.
     return policy2D
