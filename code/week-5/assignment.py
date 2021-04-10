@@ -72,22 +72,16 @@ def optimum_policy_2D(grid, init, goal, cost):
             if (y, x) == goal and value[(t, y, x)] > 0:
                 # TODO: implement code.
                 value[(t, y, x)] = 0
-                policy[(t, y, x)] = 3
+                policy[(t, y, x)] = 999
                 change = True
 
             # Try to use simple arithmetic to capture state transitions.
             elif grid[(y, x)] == 0:
                 # TODO: implement code.
-                for act, act_name in zip(action, action_name):
-                    t2 = (t + act) % len(forward)
+                for act in action:
+                    t2 = (t + act) % 4
                     y2, x2 = y + forward[t2][0], x + forward[t2][1]
-                    # act_cost = cost[act + 1]
-                    if act_name == 'R':
-                        act_cost = cost[0]
-                    elif act_name == '#':
-                        act_cost = cost[1]
-                    else:
-                        act_cost = cost[2]
+                    act_cost = cost[act + 1]
                     if 0 <= y2 < grid.shape[0] and 0 <= x2 < grid.shape[1] and grid[(y2, x2)] == 0:
                         v2 = value[(t2, y2, x2)] + act_cost
                         if v2 < value[(t, y, x)]:
