@@ -74,6 +74,7 @@ if __name__ == '__main__':
         pf.update_weights(sensor_range, *landmark_std, observations, Map)
         # Resample particles to capture posterior belief distribution.
         pf.resample()
+        
         # Select the best (highest weight) particle;
         #   we will assume that this represents the vehicle's position.
         particle = pf.get_best_particle()

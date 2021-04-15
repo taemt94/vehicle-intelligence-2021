@@ -1,7 +1,5 @@
 import numpy as np
-import scipy as sp
-from scipy.stats import multivariate_normal
-from helpers import distance
+from helpers import *
 
 class ParticleFilter:
     def __init__(self, num_particles):
@@ -82,19 +80,23 @@ class ParticleFilter:
         for p in self.particles:
             visible_landmarks = []
             for id, landmark in map_landmarks.items():
-                if distance(p, landmark) <= sensor_range:
-                    landmark['id'] = id
-                    visible_landmarks.append(landmark)
+                if distance(p, landmark) < sensor_range:
+                    visible = {'x': landmark['x'], 'y': landmark['y'], 'id': id}
+                    visible_landmarks.append(visible)
 
         # 2. Transform each observed landmark's coordinates from the
         #    particle's coordinate system to the map's coordinates.
             transformed_observations = []
             for obs in observations:
-                obs['x'] = obs['x'] + p['x'] * np.cos(p['t']) - \
-                                      p['y'] * np.sin(p['t'])
-                obs['y'] = obs['y'] + p['x'] * np.sin(p['t']) + \
-                                      p['y'] * np.cos(p['t'])
-                transformed_observations.append(obs)
+                tmp_obs = {}
+                tmp_obs['x'] = p['x'] + (obs['x'] * np.cos(p['t'])) - \
+                                        (obs['y'] * np.sin(p['t']))
+                tmp_obs['y'] = p['y'] + (obs['x'] * np.sin(p['t'])) + \
+                                        (obs['y'] * np.cos(p['t']))
+                transformed_observations.append(tmp_obs)
+
+            if len(visible_landmarks) == 0:
+                continue
 
         # 3. Associate each transformed observation to one of the
         #    predicted (selected in Step 1) landmark positions.
@@ -103,7 +105,7 @@ class ParticleFilter:
         #    the list of landmarks by implementing the nearest-neighbour
         #    association algorithm.
             assoc_landmarks = self.associate(visible_landmarks, transformed_observations)
-            p['accoc'] = [landmark['id'] for landmark in assoc_landmarks]
+            p['assoc'] = [landmark['id'] for landmark in assoc_landmarks]
 
         # 4. Calculate probability of this set of observations based on
         #    a multi-variate Gaussian distribution (two variables being
@@ -111,23 +113,14 @@ class ParticleFilter:
         #    and variances from std_landmark_x and std_landmark_y).
         #    The resulting probability is the product of probabilities
         #    for all the observations.
-            particle_loc = np.array([p['x'], p['y']])
-            landmark_x = np.array([landmark['x'] for landmark in assoc_landmarks])
-            landmark_y = np.array([landmark['y'] for landmark in assoc_landmarks])
-            print(landmark_x)
-            print(landmark_y)
-            mean_x = landmark_x.mean(axis=0)
-            mean_y = landmark_y.mean(axis=0)
-            mean = np.array([mean_x, mean_y])
-            
-            corr = np.correlate(landmark_x, landmark_y)[0]
+            for t, a in zip(transformed_observations, assoc_landmarks):
+                g_x = norm_pdf(t['x'], a['x'], std_landmark_x)
+                g_y = norm_pdf(t['y'], a['y'], std_landmark_y)
+                gaussian = g_x * g_y
 
-            cov = np.array([[std_landmark_x**2, corr*std_landmark_x*std_landmark_y],
-                            [corr*std_landmark_x*std_landmark_y, std_landmark_y**2]])
-            particle_prob = multivariate_normal.pdf(particle_loc, mean=mean, cov=cov)
         # 5. Update the particle's weight by the calculated probability.
-            p['w'] = particle_prob
-
+                p['w'] *= gaussian
+            
     # Resample particles with replacement with probability proportional to
     #   their weights.
     def resample(self):
@@ -135,7 +128,22 @@ class ParticleFilter:
         #       that captures the posteior belief distribution, by
         # 1. Drawing particle samples according to their weights.
         weights = [p['w'] for p in self.particles]
-        new_particles = np.random.choice(self.particles, self.num_particles, p=weights)
+        w_cumsum = np.cumsum(weights)
+        w_mean = np.sum(weights) / len(weights)
+        weight_idx = np.zeros(len(weights), dtype=np.int8)
+        
+        w_pointer = 0.0
+        i = w_idx = 0
+        while i > len(weights):
+            if w_cumsum[w_idx] >= w_pointer:
+                weight_idx[i] = w_idx
+            else:
+                weight_idx[i] = w_idx
+                w_idx += 1
+            w_pointer += w_mean
+            i += 1
+            
+        new_particles = [self.particles[i].copy() for i in weight_idx]
 
         # 2. Make a copy of the particle; otherwise the duplicate particles
         #    will not behave independently from each other - they are
@@ -143,9 +151,7 @@ class ParticleFilter:
         #    Finally, self.particles shall contain the newly drawn set of
         #    particles.
         self.particles = []
-        for new in new_particles:
-            tmp_particle = new
-            self.particles.append(tmp_particle)
+        self.particles = new_particles.copy()
 
         return
 
