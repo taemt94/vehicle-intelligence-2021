@@ -23,6 +23,7 @@ class GNB():
         # The following implementation simply extracts the four raw values
         # given by the input data, i.e. s, d, s_dot, and d_dot.
         s, d, s_dot, d_dot = vars
+
         return s, d, s_dot, d_dot
 
     # Train the GNB using a combination of X and Y, where
@@ -34,6 +35,7 @@ class GNB():
         for each class. Record them for later use in prediction.
         '''
         # TODO: implement code.
+        X[0]
 
     # Given an observation (s, s_dot, d, d_dot), predict which behaviour
     # the vehicle is going to take using GNB.
