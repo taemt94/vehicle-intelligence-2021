@@ -23,7 +23,7 @@ computed by get_helper_data function.
 REACH_GOAL = 1.
 EFFICIENCY = 1.
 
-DEBUG = True
+DEBUG = False
 
 def goal_distance_cost(vehicle, trajectory, predictions, data):
     '''
@@ -32,18 +32,17 @@ def goal_distance_cost(vehicle, trajectory, predictions, data):
     Cost of being out of goal lane also becomes larger as vehicle approaches
     the goal distance.
     '''
-    cost = 0.0
     intended_lane_dist = vehicle.goal_lane - data[0]
     final_lane_dist = vehicle.goal_lane - data[1]
     goal_dist = data[2]
-    print(intended_lane_dist, final_lane_dist, goal_dist)
+    # print(intended_lane_dist, final_lane_dist, goal_dist)
     if goal_dist / vehicle.goal_s > 0.4:
-        cost = 1.0
+        cost = 0.0
     elif goal_dist > 0:
         cost = 1 - exp((intended_lane_dist + final_lane_dist) / (goal_dist))
     else:
         cost = 1
-    print(cost)
+    print("goal_distance_cost:", cost)
     return cost
 
 def inefficiency_cost(vehicle, trajectory, predictions, data):
@@ -51,18 +50,17 @@ def inefficiency_cost(vehicle, trajectory, predictions, data):
     Cost becomes higher for trajectories with intended lane and final lane
     that have slower traffic.
     '''
-    cost = 0.0
     intented_lane = data[0]
     final_lane = data[1]
     goal_dist = data[2]
-    print(intented_lane, final_lane, goal_dist)
+    # print(intented_lane, final_lane, goal_dist)
     if goal_dist / vehicle.goal_s > 0.4:
         cost = exp(-(intented_lane + final_lane))
-    elif (intented_lane + final_lane) == 0:
-        cost = 1 - exp(-(intented_lane + final_lane))
+    # elif (intented_lane + final_lane) == vehicle.goal_lane:
+    #     cost = 1 - exp(-(intented_lane + final_lane))
     else:
-        cost = exp(-(intented_lane + final_lane) * 20)
-    print(cost)
+        cost = 1 - exp(-(intented_lane + final_lane))
+    # print(cost)
     return cost
 
 def calculate_cost(vehicle, trajectory, predictions):
@@ -84,7 +82,7 @@ def calculate_cost(vehicle, trajectory, predictions):
                 (cf.__name__, new_cost, trajectory[-1].lane)
             )
         cost += new_cost
-    print("total_cost:", cost)
+    # print("total_cost:", cost)
     return cost
 
 def get_helper_data(vehicle, trajectory, predictions):

@@ -72,3 +72,74 @@ You are also invited to experiment with a number of different simulation setting
 and so on.
 
 Remember that our state machine should be geared towards reaching the goal in an *efficient* manner. Try to compare a behaviour that switches to the goal lane as soon as possible (note that the goal position is in the slowest lane in the given setting) and one that follows a faster lane and move to the goal lane as the remaining distance decreases. Observe different behaviour taken by the ego vehicle when different weights are given to different cost functions, and also when other cost metrics (additional cost functions) are used.
+
+### REPORT
+#### Assignment 2
+- Assignment 2는 text-based의 시뮬레이션을 통해 behaviour planner를 구현하는 assignment이다.
+- 해당 과제에서는 FSM transition function(choose_next_state() 메서드)과 다양한 두가지의 cost function을 구현하고 이를 조합하여 total cost가 최소인 FSM을 선택하며 시뮬레이션을 진행하게 된다.
+- 각각의 함수에 대한 구현은 아래와 같다.
+
+1. choose_next_state()
+   - choose_next_state() 메서드는 현재 차량의 위치에서 이동 가능한 다음 state를 successor_states() 메서드를 통해 구한다.
+   - 그리고 이동 가능한 모든 state에 대해 주변 차량들의 이동할 위치에 대한 예측인 predictions을 참고하여 자차의 trajectory를 구하고 이에 대한 cost를 계산한다.
+   - 각각의 state에 대한 cost를 costs에 입력한 후, 모든 state에 대해 cost 계산이 완료되면 최소 cost를 가지는 state를 구한다.
+   - cost가 최소인 state를 best_next_state로 하여 다음 state를 선택하고 이에 대한 자차의 trajectory를 생성하여 리턴한다.
+   ``` python
+   def choose_next_state(self, predictions):
+       # TODO: implement state transition function based on the cost
+       #       associated with each transition.
+       possible_successor_states = self.successor_states()
+       costs = []
+       for state in possible_successor_states:
+           trajectory = self.generate_trajectory(state, predictions)
+           cost_for_state = calculate_cost(self, trajectory, predictions)
+           costs.append({'state': state, 'cost': cost_for_state})
+
+       best_next_state = None
+       min_cost = 9999999
+       for c in costs:
+           if c['cost'] < min_cost:
+               min_cost = c['cost']
+               best_next_state = c['state']
+
+       next_trajectory = self.generate_trajectory(best_next_state, predictions)
+       return next_trajectory
+   ```
+2. Cost functions
+- cost function으로는 goal_distance_cost()와 inefficiency_cost()로 두가지를 사용한다.  
+2-1. goal_distance_cost()
+  - goal_distance_cost()의 경우 차량이 주행할 때 현재 차량의 lane과 goal_lane에 대한 차이에 대한 cost를 계산한다.
+  - 이를 아래의 코드를 통해 구현하였다.
+  - 먼저 도착지까지의 거리가 충분히 남은 경우(if goal_dist / vehicle.goal_s > 0.4)에는 goal_distance_cost를 항상 같은 값인 1.0이 되도록 하여 goal_discance_cost가 total cost를 결정하는데 영향을 미치지 못하도록 하였다.
+  - 여기서 도착지까지의 남은 거리에 대한 지표로 사용한 값 0.4는 regression tests를 통해서 찾은 값이다.
+  - 이렇게 할 경우 차량의 total cost는 inefficiency_cost에 의해서만 결정되어 도착지까지의 거리가 충분히 남은 경우 무조건 fastest lane에서 주행하도록 할 수 있다.
+  - 도착지에 점점 가까워지는 경우(elif goal_dist > 0) goal_distance_cost가 차량의 intened_lane과 final_lane이 goal_lane에 가까울수록 작아지도록 하여 goal_distance_cost에 따라 차량이 cost가 작은 방향으로 차선을 바꿀 수 있도록 하였다.
+  ``` python
+  def goal_distance_cost(vehicle, trajectory, predictions, data):
+  intended_lane_dist = vehicle.goal_lane - data[0]
+  final_lane_dist = vehicle.goal_lane - data[1]
+  goal_dist = data[2]
+  if goal_dist / vehicle.goal_s > 0.4:
+      cost = 1.0
+  elif goal_dist > 0:
+      cost = 1 - exp((intended_lane_dist + final_lane_dist) / (goal_dist))
+  else:
+      cost = 1
+  return cost
+  ```
+2-2. inefficiency cost()
+- 다음으로 inefficiency cost()는 차량이 현재 위치한 lane의 속도가 느릴수록 큰 cost를 리턴하는 함수이다.
+- goal_distance_cost와 동일하게 도착지까지의 거리가 충분히 남은 경우(if goal_dist / vehicle.goal_s > 0.4)와 그렇지 않은 경우로 나누어 cost를 구하였다.
+- 도착지까지의 거리가 충분히 남은 경우에는 intended_lane과 final_lane이 속도가 빠른 lane일수록 cost가 작은 값을 가지도록 하여 항상 속도가 가장 빠른 lane에서 주행하도록 하였다.
+- 도착지까지 점점 가까워지는 경우 반대로 intened_lane과 final_lane이 goal_lane과 멀수록 cost가 커지게 하여 cost가 작은 쪽인 goal_lane 쪽으로 차선을 변경할 수 있도록 하였다.
+``` python
+def inefficiency_cost(vehicle, trajectory, predictions, data):
+    intented_lane = data[0]
+    final_lane = data[1]
+    goal_dist = data[2]
+    if goal_dist / vehicle.goal_s > 0.4:
+        cost = exp(-(intented_lane + final_lane))
+    else:
+        cost = 1 - exp(-(intented_lane + final_lane))
+    return cost
+```

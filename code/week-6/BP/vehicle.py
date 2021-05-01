@@ -56,15 +56,15 @@ class Vehicle(object):
         # TODO: implement state transition function based on the cost
         #       associated with each transition.
 
-        
-
         # road.advance()에서 generate_predictions()를 가지고 다른 차량에 대한
         # predictions를 먼저 구하고 나서 여기에 들어온다.
+        # print(predictions)
         possible_successor_states = self.successor_states()
         costs = []
         for state in possible_successor_states:
             print("possibles:", state)
             trajectory = self.generate_trajectory(state, predictions)
+            print("trajectory state:", trajectory[1].state)
             cost_for_state = calculate_cost(self, trajectory, predictions)
             costs.append({'state': state, 'cost': cost_for_state})
 
@@ -78,12 +78,7 @@ class Vehicle(object):
         next_trajectory = self.generate_trajectory(best_next_state, predictions)
         # Note that the return value is a trajectory, where a trajectory
         # is a list of Vehicle objects with two elements.
-        print(next_trajectory[1].state)
         return next_trajectory
-        # return [
-        #     Vehicle(self.lane, self.s, self.v, self.a, self.state),
-        #     Vehicle(self.lane, self.position_at(1), self.v, 0, self.state)
-        # ]
 
     def successor_states(self):
         '''

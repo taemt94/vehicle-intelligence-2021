@@ -2,7 +2,7 @@ import numpy as np
 
 class HybridAStar:
     # Determine how many grid cells to have for theta-axis.
-    NUM_THETA_CELLS = 180
+    NUM_THETA_CELLS = 360
 
     # Define min, max, and resolution of steering angles
     omega_min = -35
@@ -58,14 +58,14 @@ class HybridAStar:
         return theta
 
     def State(self, x, y, theta, g, f):
-        s = {
-                'f': f,
-                'g': g,
-                'x': x,
-                'y': y,
-                't': theta,
-            }
-        return s
+        state = {
+                    'f': f,
+                    'g': g,
+                    'x': x,
+                    'y': y,
+                    't': theta,
+                }
+        return state
 
     # Perform a breadth-first search based on the Hybrid A* algorithm.
     def search(self, grid, start, goal):
@@ -90,6 +90,7 @@ class HybridAStar:
         self.came_from[stack][self.idx(s['x'])][self.idx(s['y'])] = s
         total_closed = 1
         opened = [s]
+
         # Examine the open list, according to the order dictated by
         # the heuristic function.
         cycle = 0
@@ -101,7 +102,6 @@ class HybridAStar:
             
             opened.sort(key=lambda s : s['f'], reverse=True)
             curr = opened.pop()
-            # print(curr)
             x, y = curr['x'], curr['y']
             if (self.idx(x), self.idx(y)) == goal:
                 self.final = curr
@@ -111,16 +111,11 @@ class HybridAStar:
             # Compute reachable new states and process each of them.
             next_states = self.expand(curr, goal)
             for n in next_states:
-                idx_x = self.idx(n['x'])
-                idx_y = self.idx(n['y'])
+                idx_x, idx_y = self.idx(n['x']), self.idx(n['y'])
                 stack = self.theta_to_stack_num(n['t'])
                 if grid[idx_x, idx_y] == 0:
-                    #    grid[self.idx(x), idx_y] == 0 and
-                    #    grid[idx_x, self.idx(y)] == 0:
-                    dist_x = abs(self.idx(x) - idx_x)
-                    dist_y = abs(self.idx(y) - idx_y)
-                    min_x = np.minimum(self.idx(x), idx_x)
-                    min_y = np.minimum(self.idx(y), idx_y)
+                    dist_x, dist_y = abs(self.idx(x) - idx_x), abs(self.idx(y) - idx_y)
+                    min_x, min_y = np.minimum(self.idx(x), idx_x), np.minimum(self.idx(y), idx_y)
                     possible = True
                     for d_x in range(dist_x + 1):
                         for d_y in range(dist_y + 1):
@@ -131,6 +126,7 @@ class HybridAStar:
                         total_closed += 1
                         self.came_from[stack][idx_x][idx_y] = curr
                         opened.append(n)
+
         else:
             # We weren't able to find a valid path; this does not necessarily
             # mean there is no feasible trajectory to reach the goal.

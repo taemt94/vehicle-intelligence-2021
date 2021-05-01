@@ -9,6 +9,7 @@ def main():
 		j = json.load(f)
 	X = j['states']
 	Y = j['labels']
+	# print(X)
 	gnb.train(X, Y)
 
 	with open('test.json', 'rb') as f:
