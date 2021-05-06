@@ -56,8 +56,6 @@ def inefficiency_cost(vehicle, trajectory, predictions, data):
     # print(intented_lane, final_lane, goal_dist)
     if goal_dist / vehicle.goal_s > 0.4:
         cost = exp(-(intented_lane + final_lane))
-    # elif (intented_lane + final_lane) == vehicle.goal_lane:
-    #     cost = 1 - exp(-(intented_lane + final_lane))
     else:
         cost = 1 - exp(-(intented_lane + final_lane))
     # print(cost)

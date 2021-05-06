@@ -39,25 +39,18 @@ class GNB():
         processed_X = [list(self.process_vars(x)) for x in X]
 
         keep_values = [[0.], [0.], [0.], [0.]]
-        # keep_values = [[0.]] * 4
-        # print(keep_values)
-        # print(id(keep_values[0]), id(keep_values[1]))
         right_values = [[0.], [0.], [0.], [0.]]
         left_values = [[0.], [0.], [0.], [0.]]
-        # left_values = [[0.]] * 4
-
         for values, label in zip(processed_X, Y):
             if label == 'keep':
                 for i, k_v in enumerate(values):
                     keep_values[i].append(k_v)
-                    # print(keep_values[i][-1])
             elif label == 'right':
                 for i, r_v in enumerate(values):
                     right_values[i].append(r_v)
             else:
                 for i, l_v in enumerate(values):
                     left_values[i].append(l_v)
-        # print(keep_values[0][-1])
         keep_values, right_values, left_values = np.array(keep_values), np.array(right_values), np.array(left_values)
         self.keep_mean = [k_v.mean() for k_v in keep_values]
         self.keep_std = [k_v.std() for k_v in keep_values]
@@ -81,6 +74,7 @@ class GNB():
         # TODO: implement code.
         keep_prob = right_prob = left_prob = 1.
         keep_normalizer = right_normalizer = left_normalizer = 0.
+
         for i, obs in enumerate(observation):
             keep_prob *= self.gaussian(self.keep_std[i], self.keep_mean[i], obs)
             keep_normalizer += self.gaussian(self.keep_std[i], self.keep_mean[i], obs)
@@ -90,6 +84,7 @@ class GNB():
 
             left_prob *= self.gaussian(self.left_std[i], self.left_mean[i], obs)
             left_normalizer += self.gaussian(self.left_std[i], self.left_mean[i], obs)
+
         keep_prob /= keep_normalizer
         right_prob /= right_normalizer
         left_prob /= left_normalizer

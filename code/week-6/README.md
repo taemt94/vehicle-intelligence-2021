@@ -73,8 +73,74 @@ and so on.
 
 Remember that our state machine should be geared towards reaching the goal in an *efficient* manner. Try to compare a behaviour that switches to the goal lane as soon as possible (note that the goal position is in the slowest lane in the given setting) and one that follows a faster lane and move to the goal lane as the remaining distance decreases. Observe different behaviour taken by the ego vehicle when different weights are given to different cost functions, and also when other cost metrics (additional cost functions) are used.
 
-### REPORT
-#### Assignment 2
+## Report
+### Assignment 1
+- Assignment 1은 Hybrid Approach를 통해 주변 차량의 주행 경로를 예측하는 과제이다.
+- 먼저 Data-driven approach에서는 주변 차량의 주행 데이터(s, s_dot, d, d_dot)로부터 차량의 직진('keep'), 오른쪽 차선으로 차선 변경('right'), 왼쪽 차선으로 차선 변경('left')에 대한 평균과 표준편차를 각각 계산한다.
+- 그리고 Model-based approach로 데이터에서 계산한 평균과 표준편차를 Naive-Bayes classifier에 적용하여 각각의 주행 경로에 대한 확률(예측)을 계산한다.
+- Naive-Bayes classifier를 통해 계산된 확률 중에서 가장 높은 값을 가지는 주행 방향이 차량의 예측 주행 경로가 된다.
+- 이를 구현하기 위해 작성한 코드는 아래와 같다.
+- 먼저 train() 메서드는 차량의 주행 데이터로부터 각각의 주행 경로에 대한 평균과 표준편차를 계산한다.
+- 데이터에서 label이 'keep', 'right', 'left'인 데이터를 나누어 리스트에 입력한 후 각각의 리스트마다 데이터(s, s_dot, d, d_dot)의 평균과 표준편차를 구하도록 하였다.
+    ``` python
+    def train(self, X, Y):
+        processed_X = [list(self.process_vars(x)) for x in X]
+
+        keep_values = [[0.], [0.], [0.], [0.]]
+        right_values = [[0.], [0.], [0.], [0.]]
+        left_values = [[0.], [0.], [0.], [0.]]
+        for values, label in zip(processed_X, Y):
+            if label == 'keep':
+                for i, k_v in enumerate(values):
+                    keep_values[i].append(k_v)
+            elif label == 'right':
+                for i, r_v in enumerate(values):
+                    right_values[i].append(r_v)
+            else:
+                for i, l_v in enumerate(values):
+                    left_values[i].append(l_v)
+        keep_values, right_values, left_values = np.array(keep_values), np.array(right_values), np.array(left_values)
+        self.keep_mean = [k_v.mean() for k_v in keep_values]
+        self.keep_std = [k_v.std() for k_v in keep_values]
+
+        self.right_mean = [r_v.mean() for r_v in right_values]
+        self.right_std = [r_v.std() for r_v in right_values]
+
+        self.left_mean = [l_v.mean() for l_v in left_values]
+        self.left_std = [l_v.std() for l_v in left_values]
+    ```
+- predict() 메서드는 train() 메서드에서 구한 평균과 표준편차를 이용하여 Naive-Bayes classifier를 적용하는 메서드이다.
+- Naive-Bayes classifier를 주행 경로('keep', 'right', 'left')에 대해 각각 적용하여 확률을 계산하고, 확률이 가장 큰 주행 경로를 예측 주행 경로가 되도록 작성하였다.
+    ``` python
+    def predict(self, observation):
+        keep_prob = right_prob = left_prob = 1.
+        keep_normalizer = right_normalizer = left_normalizer = 0.
+        for i, obs in enumerate(observation):
+            keep_prob *= self.gaussian(self.keep_std[i], self.keep_mean[i], obs)
+            keep_normalizer += self.gaussian(self.keep_std[i], self.keep_mean[i], obs)
+
+            right_prob *= self.gaussian(self.right_std[i], self.right_mean[i], obs)
+            right_normalizer += self.gaussian(self.right_std[i], self.right_mean[i], obs)
+
+            left_prob *= self.gaussian(self.left_std[i], self.left_mean[i], obs)
+            left_normalizer += self.gaussian(self.left_std[i], self.left_mean[i], obs)
+        keep_prob /= keep_normalizer
+        right_prob /= right_normalizer
+        left_prob /= left_normalizer
+        
+        predict_idx = np.argmax([left_prob, keep_prob, right_prob])
+
+        return self.classes[predict_idx]
+
+    def gaussian(self, std, mean, value):
+        prob = 1 / sqrt(2 * pi * (std) ** 2) * exp(-(value - mean) ** 2 / (2 * (std) ** 2))
+        return prob
+    ```
+#### Result
+- 아래는 훈련 데이터셋을 통해 각각의 주행 경로에 대한 평균과 표준편차를 구하고, 테스트 데이터셋을 통해 예측한 주행 경로에 대한 정확도를 구한 결과이다.
+![Assignment1 result](./GNB/assignment1.PNG)
+- 테스트 결과를 보면, 84.80% 정도의 정확도를 보여준다.
+### Assignment 2
 - Assignment 2는 text-based의 시뮬레이션을 통해 behaviour planner를 구현하는 assignment이다.
 - 해당 과제에서는 FSM transition function(choose_next_state() 메서드)과 다양한 두가지의 cost function을 구현하고 이를 조합하여 total cost가 최소인 FSM을 선택하며 시뮬레이션을 진행하게 된다.
 - 각각의 함수에 대한 구현은 아래와 같다.
@@ -143,3 +209,10 @@ def inefficiency_cost(vehicle, trajectory, predictions, data):
         cost = 1 - exp(-(intented_lane + final_lane))
     return cost
 ```
+
+#### Result
+- Behaviour planner를 이용하여 시뮬레이션을 진행한 결과를 아래에 나타내었다.
+
+![Assignment1 result](./BP/assignment2.PNG)
+
+- 결과를 보면, goal lane까지 도달하는데 33초가 소요된 것을 알 수 있다.
