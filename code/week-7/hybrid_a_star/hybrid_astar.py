@@ -10,7 +10,7 @@ class HybridAStar:
     omega_step = 5
 
     # A very simple bicycle model
-    speed = 1.5
+    speed = 2.0
     length = 0.5
 
     # Initialize the search structure.
